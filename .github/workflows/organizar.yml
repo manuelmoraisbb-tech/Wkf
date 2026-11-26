@@ -1,0 +1,54 @@
+name: Organizar animes (nomes + imagens)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:            # nunca corre duas vezes ao mesmo tempo
+  group: organizar-animes
+  cancel-in-progress: false
+
+jobs:
+  organizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verificar o nomes.json (criado no telemóvel com extrair_nomes.py)
+        run: test -f nomes.json || (echo "Falta o nomes.json no repositório" && exit 1)
+
+      # Catálogo do AniList: só descarrega se faltar ou tiver mais de 30 dias; retoma se estiver incompleto
+      - name: Catálogo do AniList
+        id: cat
+        run: python anilist_catalogo.py
+
+      # always(): guarda o progresso mesmo se o passo acima falhar, for cancelado ou estourar o tempo
+      - name: Guardar catálogo (progresso)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add anilist_catalogo.json
+          git diff --staged --quiet || git commit -m "Atualiza catálogo AniList"
+          git pull --rebase
+          git push
+
+      # Nomes + uma imagem por série (segundos, sem internet)
+      - name: Atualizar nomes e imagens
+        if: steps.cat.outputs.completo == 'true'
+        run: python organizar.py nomes.json
+
+      - name: Guardar resultados
+        if: steps.cat.outputs.completo == 'true'
+        run: |
+          git add nomes.json nomes_revisar.txt sem_imagem.txt
+          git diff --staged --quiet || git commit -m "Nomes e imagens atualizados"
+          git pull --rebase
+          git push

@@ -1,4 +1,4 @@
-name: Organizar animes (nomes + imagens)
+name: Nomes e imagens dos animes
 
 on:
   workflow_dispatch:
@@ -7,13 +7,13 @@ permissions:
   contents: write
 
 concurrency:            # nunca corre duas vezes ao mesmo tempo
-  group: organizar-animes
+  group: nomes-e-imagens
   cancel-in-progress: false
 
 jobs:
-  organizar:
+  nomes:
     runs-on: ubuntu-latest
-    timeout-minutes: 200
+    timeout-minutes: 340
     steps:
       - uses: actions/checkout@v4
 
@@ -21,34 +21,24 @@ jobs:
         with:
           python-version: "3.12"
 
+      - run: pip install requests
+
       - name: Verificar o nomes.json (criado no telemóvel com extrair_nomes.py)
         run: test -f nomes.json || (echo "Falta o nomes.json no repositório" && exit 1)
 
-      # Catálogo do AniList: só descarrega se faltar ou tiver mais de 30 dias; retoma se estiver incompleto
-      - name: Catálogo do AniList
-        id: cat
-        run: python anilist_catalogo.py
+      # Retoma sozinho: só pesquisa os animes que ainda não estão "feito" no nomes.json
+      - name: Nomes e imagens (AniList)
+        run: python nomes_e_imagens.py nomes.json
+        env:
+          ORCAMENTO_MIN: "300"
 
-      # always(): guarda o progresso mesmo se o passo acima falhar, for cancelado ou estourar o tempo
-      - name: Guardar catálogo (progresso)
+      # always(): guarda o progresso mesmo que o passo acima falhe, seja cancelado ou estoure o tempo
+      - name: Guardar progresso
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add anilist_catalogo.json
-          git diff --staged --quiet || git commit -m "Atualiza catálogo AniList"
-          git pull --rebase
-          git push
-
-      # Nomes + uma imagem por série (segundos, sem internet)
-      - name: Atualizar nomes e imagens
-        if: steps.cat.outputs.completo == 'true'
-        run: python organizar.py nomes.json
-
-      - name: Guardar resultados
-        if: steps.cat.outputs.completo == 'true'
-        run: |
           git add nomes.json nomes_revisar.txt sem_imagem.txt
-          git diff --staged --quiet || git commit -m "Nomes e imagens atualizados"
+          git diff --staged --quiet || git commit -m "Nomes e imagens (progresso)"
           git pull --rebase
           git push

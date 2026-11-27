@@ -8,8 +8,8 @@ on:
       - 'nomes_revisar.txt'
       - 'nomes_manuais.json'
       - 'nomes.json'
-      - 'compactar_arquivos.py'
-      - '.github/workflows/nomes.yml'
+      - 'com_imagem.json'
+      - 'ainda_sem_imagem.txt'
 
 permissions:
   contents: read

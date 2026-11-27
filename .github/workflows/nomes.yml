@@ -1,1 +1,51 @@
+name: Compactar arquivos da pasta main
 
+"on":
+  workflow_dispatch:
+  push:
+    paths:
+      - 'main/sem_imagem.txt'
+      - 'main/nomes_revisar.txt'
+      - 'main/nomes_manuais.json'
+      - 'main/nomes.json'
+    
+
+jobs:
+  compactar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Procurar e compactar arquivos
+        run: |
+          echo "A procurar arquivos em main/..."
+          ls -lh main/ || echo "Pasta main não encontrada"
+
+          mkdir -p arquivos_encontrados
+
+          for arquivo in sem_imagem.txt nomes_revisar.txt nomes_manuais.json; do
+            if [ -f "main/$arquivo" ]; then
+              echo "✅ Encontrado: main/$arquivo"
+              cp "main/$arquivo" "arquivos_encontrados/"
+            else
+              echo "⚠️ Não encontrado: main/$arquivo"
+            fi
+          done
+
+          if [ -z "$(ls -A arquivos_encontrados)" ]; then
+            echo "❌ Nenhum arquivo encontrado, a cancelar..."
+            exit 1
+          fi
+
+          cd arquivos_encontrados
+          zip -r ../arquivos_main.zip .
+          cd ..
+          ls -lh arquivos_main.zip
+
+      - name: Enviar zip como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: arquivos_main
+          path: arquivos_main.zip
+          retention-days: 30

@@ -50,4 +50,3 @@ jobs:
           git diff --staged --quiet || git commit -m "Posters do TMDb"
           git pull --rebase
           git push
-          

@@ -10,8 +10,8 @@ OUTPUT = ROOT / "arquivos_main.zip"
 INPUTS = (
     "sem_imagem.txt",
     "nomes_revisar.txt",
-    "nomes_manuais.json",
-    "nomes.json",
+    "com_imagem.json",
+    "ainda_sem_imagem.txt",
 )
 
 

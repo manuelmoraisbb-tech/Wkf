@@ -5,8 +5,8 @@ on:
   push:
     paths:
       - 'main/sem_imagem.txt'
-      - 'main/nomes_revisar.txt'
-      - 'main/nomes_manuais.json'
+      - 'main/com_imagem.json'
+      - 'main/ainda_sem_imagem.txt'
       - 'main/nomes.json'
       
 
